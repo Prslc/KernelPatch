@@ -379,14 +379,6 @@ static long supercall(int is_authed, long cmd, long arg1, long arg2, long arg3, 
     return -ENOSYS;
 }
 
-int is_trusted_manager_uid(uid_t uid)
-{
-    #ifdef ANDROID
-    return is_trusted_manager_uid_android(uid);
-    #endif
-    return 0;
-}
-
 static void before(hook_fargs6_t *args, void *udata)
 {
     int uid = current_uid();
@@ -403,10 +395,13 @@ static void before(hook_fargs6_t *args, void *udata)
         is_authed = !auth_superkey(key);
         is_trusted_caller = is_authed;
     }
+#ifdef ANDROID
     if (is_trusted_manager_uid(uid)) {
         is_trusted_caller = 1;
         is_authed = 1;
-    } else if (is_su_allow_uid(uid)) {
+    }
+#endif
+    if (is_su_allow_uid(uid)) {
         is_trusted_caller = 1;
     }
 

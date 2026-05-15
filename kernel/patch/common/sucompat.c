@@ -38,6 +38,9 @@
 #include <uapi/linux/limits.h>
 #include <predata.h>
 #include <kstorage.h>
+#ifdef ANDROID
+#include <userd.h>
+#endif
 
 const char sh_path[] = SH_PATH;
 const char default_su_path[] = SU_PATH;
@@ -191,7 +194,11 @@ KP_EXPORT_SYMBOL(su_get_path);
 static void handle_before_execve(char **__user u_filename_p, char **__user uargv, void *udata)
 {
     uid_t uid = current_uid();
+#ifdef ANDROID
     if (!is_su_allow_uid(uid) && !is_trusted_manager_uid(uid)) return;
+#else
+    if (!is_su_allow_uid(uid)) return;
+#endif
 
     char __user *ufilename = *u_filename_p;
     char filename[SU_PATH_MAX_LEN];
@@ -201,10 +208,13 @@ static void handle_before_execve(char **__user u_filename_p, char **__user uargv
     if (!strcmp(current_su_path, filename)) {
         uid_t uid = current_uid();
         struct su_profile profile = { .to_uid = 0 };
+#ifdef ANDROID
         if (is_trusted_manager_uid(uid)) {
             strncpy(profile.scontext, all_allow_sctx, sizeof(profile.scontext) - 1);
             profile.scontext[sizeof(profile.scontext) - 1] = '\0';
-        } else if (su_allow_uid_profile(0, uid, &profile)) {
+        }
+#endif
+        if (su_allow_uid_profile(0, uid, &profile)) {
             return;
         }
 
@@ -313,7 +323,11 @@ __maybe_unused static void before_execveat(hook_fargs5_t *args, void *udata)
 static void su_handler_arg1_ufilename_before(hook_fargs6_t *args, void *udata)
 {
     uid_t uid = current_uid();
+#ifdef ANDROID
     if (!is_su_allow_uid(uid) && !is_trusted_manager_uid(uid)) return;
+#else
+    if (!is_su_allow_uid(uid)) return;
+#endif
 
     char __user **u_filename_p = (char __user **)syscall_argn_p(args, 1);
 
