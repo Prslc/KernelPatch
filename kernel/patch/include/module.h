@@ -49,9 +49,11 @@ struct module
     void *start;
 
     struct list_head list;
+
+    bool embedded;
 };
 
-long load_module(const void *data, int len, const char *args, const char *event, void *__user reserved);
+long load_module(const void *data, int len, const char *args, const char *event, void *__user reserved, bool embedded);
 long load_module_path(const char *path, const char *args, void *__user reserved);
 long module_control0(const char *name, const char *ctl_args, char *__user out_msg, int outlen);
 long module_control1(const char *name, void *a1, void *a2, void *a3);

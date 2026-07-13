@@ -395,7 +395,7 @@ static int elf_header_check(struct load_info *info)
 struct module modules = { 0 };
 static spinlock_t module_lock;
 
-long load_module(const void *data, int len, const char *args, const char *event, void *__user reserved)
+long load_module(const void *data, int len, const char *args, const char *event, void *__user reserved, bool embedded)
 {
     struct load_info load_info = { .len = len, .hdr = data };
     struct load_info *info = &load_info;
@@ -436,6 +436,7 @@ long load_module(const void *data, int len, const char *args, const char *event,
 
     if (!rc) {
         logkfi("[%s] succeed with [%s] \n", mod->info.name, args);
+        mod->embedded = embedded;
         list_add_tail(&mod->list, &modules.list);
         goto out;
     } else {
@@ -515,7 +516,7 @@ long load_module_path(const char *path, const char *args, void *__user reserved)
         goto free;
     }
 
-    rc = load_module(data, len, args, "load-file", reserved);
+    rc = load_module(data, len, args, "load-file", reserved, false);
 free:
     kvfree(data);
 out:
@@ -647,9 +648,10 @@ int get_module_info(const char *name, char *out_info, int size)
                       "license=%s\n"
                       "author=%s\n"
                       "description=%s\n"
-                      "args=%s\n",
+                      "args=%s\n"
+                      "embedded=%d\n",
                       mod->info.name, mod->info.version, mod->info.license, mod->info.author, mod->info.description,
-                      mod->args);
+                      mod->args, mod->embedded ? 1 : 0);
 
     if (sz > 0) out_info[sz - 1] = '\0';
     logkfd("%s", out_info);

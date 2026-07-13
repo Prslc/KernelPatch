@@ -112,7 +112,7 @@ static int extra_event_load_kpm(const patch_extra_item_t *extra, const char *arg
 
     if (extra->type == EXTRA_TYPE_KPM) {
         if (!strcmp(event, extra->event) || (!extra->event[0] && !strcmp(event, EXTRA_EVENT_KPM_DEFAULT))) {
-            int rc = load_module(data, extra->con_size, args, event, 0);
+            int rc = load_module(data, extra->con_size, args, event, 0, true);
             log_boot("load kpm: %s, event: %s, rc: %d\n", extra->name, event, rc);
         }
     }
